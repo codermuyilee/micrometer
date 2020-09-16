@@ -37,7 +37,7 @@ def VERSIONS = [
         'javax.inject:javax.inject:1',
         'javax.xml.bind:jaxb-api:2.3.+',
         'junit:junit:4.12',
-        'net.sf.ehcache:ehcache:latest.release',
+        'net.sf.ehcache:ehcache:2.10.3',
         'org.apache.httpcomponents:httpasyncclient:latest.release',
         'org.apache.httpcomponents:httpclient:latest.release',
         'org.apache.kafka:kafka-clients:latest.release',
