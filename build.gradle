@@ -1,12 +1,10 @@
 buildscript {
-    repositories {
-        jcenter()
-        gradlePluginPortal()
-        maven {
-            url 'https://repo.spring.io/plugins-release'
-        }
-        mavenLocal()
-    }
+    ext.mavenRepos = [
+            'http://jfrog.cloud.qiyi.domain/jcenter/',
+            'http://jfrog.cloud.qiyi.domain/maven-google/',
+            'http://jfrog.cloud.qiyi.domain/gradle-plugins/'
+    ]
+
     dependencies {
         classpath 'io.spring.gradle:spring-release-plugin:0.20.1'
         classpath 'me.champeau.gradle:jmh-gradle-plugin:0.5.0'
@@ -33,6 +31,7 @@ apply plugin: 'io.spring.release'
 apply from: 'dependencies.gradle'
 
 allprojects {
+
     apply plugin: 'io.spring.license'
 
     afterEvaluate { project ->
@@ -208,10 +207,12 @@ subprojects {
     description = 'Application monitoring instrumentation facade'
 
     repositories {
-        mavenCentral()
-        mavenLocal()
-        // TODO remove snapshot repository before release
-        maven { url "https://repo.spring.io/snapshot" }
+//        mavenCentral()
+//        mavenLocal()
+        maven {
+            name 'libs-release'
+            url 'http://jfrog.cloud.qiyi.domain/libs-release'
+        }
     }
 
     def check = tasks.findByName('check')

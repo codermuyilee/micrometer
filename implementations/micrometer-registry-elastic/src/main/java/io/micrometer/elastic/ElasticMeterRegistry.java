@@ -130,10 +130,10 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     /**
      * Create a new instance with given parameters.
      *
-     * @param config configuration to use
-     * @param clock clock to use
+     * @param config        configuration to use
+     * @param clock         clock to use
      * @param threadFactory thread factory to use
-     * @param httpClient http client to use
+     * @param httpClient    http client to use
      * @since 1.2.1
      */
     protected ElasticMeterRegistry(ElasticConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
@@ -191,7 +191,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     @SuppressWarnings("ConstantConditions")
     private String getTemplateBody() {
-        return majorVersion == null ||  majorVersion < 7 ? TEMPLATE_BODY_BEFORE_VERSION_7 : TEMPLATE_BODY_AFTER_VERSION_7;
+        return majorVersion == null || majorVersion < 7 ? TEMPLATE_BODY_BEFORE_VERSION_7 : TEMPLATE_BODY_AFTER_VERSION_7;
     }
 
     @Override
@@ -304,7 +304,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private Optional<String> writeCounter(Meter meter, double value) {
-        if (Double.isFinite(value)) {
+        if (Double.isFinite(value) && value > 0) {
             return Optional.of(writeDocument(meter, builder -> {
                 builder.append(",\"count\":").append(value);
             }));
