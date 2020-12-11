@@ -23,39 +23,19 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.noop.NoopCounter;
-import io.micrometer.core.instrument.noop.NoopDistributionSummary;
-import io.micrometer.core.instrument.noop.NoopFunctionCounter;
-import io.micrometer.core.instrument.noop.NoopFunctionTimer;
-import io.micrometer.core.instrument.noop.NoopGauge;
-import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
-import io.micrometer.core.instrument.noop.NoopMeter;
-import io.micrometer.core.instrument.noop.NoopTimeGauge;
-import io.micrometer.core.instrument.noop.NoopTimer;
+import io.micrometer.core.instrument.noop.*;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
+import java.util.function.*;
 
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
@@ -149,7 +129,7 @@ public abstract class MeterRegistry {
     /**
      * Build a new long task timer to be added to the registry. This is guaranteed to only be called if the long task timer doesn't already exist.
      *
-     * @param id The id that uniquely identifies the long task timer.
+     * @param id                          The id that uniquely identifies the long task timer.
      * @param distributionStatisticConfig Configuration for published distribution statistics.
      * @return A new long task timer.
      * @since 1.5.0
@@ -687,8 +667,25 @@ public abstract class MeterRegistry {
         return null;
     }
 
+    public Map<Id, Meter> getMeterMap() {
+        return Collections.unmodifiableMap(meterMap);
+    }
+
+    public void calculateExpiryTime() {
+        meterMap.forEach((id, value) -> {
+            value.measure().forEach(a -> {
+                if (!(a.getValue() > 0)) {
+                    id.increaseExpiryTime();
+                } else {
+                    id.resetExpiryTime();
+                }
+            });
+        });
+    }
+
     /**
      * Clear all meters.
+     *
      * @since 1.2.0
      */
     @Incubating(since = "1.2.0")
@@ -998,7 +995,7 @@ public abstract class MeterRegistry {
     /**
      * Handle a meter registration failure.
      *
-     * @param id The id that was attempted, but for which registration failed.
+     * @param id     The id that was attempted, but for which registration failed.
      * @param reason The reason why the meter registration has failed
      * @since 1.6.0
      */

@@ -35,6 +35,12 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
     /**
      * @return The step size (reporting frequency) to use. The default is 1 minute.
      */
+    default int expiryInterval() {
+        return getInteger(this, "expiryInterval").orElse(10);
+    }
+    /**
+     * @return The step size (reporting frequency) to use. The default is 1 minute.
+     */
     default Duration step() {
         return getDuration(this, "step").orElse(Duration.ofMinutes(1));
     }

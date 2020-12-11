@@ -17,18 +17,22 @@ package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.*;
+import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
@@ -110,9 +114,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             }
 
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+                List<Meter> collect = batch.stream().map(a -> {
+                    List<Measurement> measurements = new ArrayList<>();
+                    a.measure().forEach(measurement -> {
+                        if (measurement.getValue() > 0) {
+                            measurements.add(measurement);
+                        }
+                    });
+                    return Meter.builder(a.getId().getName(), a.getId().getType(), measurements).register(this);
+
+                }).collect(Collectors.toList());
+
                 httpClient.post(influxEndpoint)
                         .withBasicAuthentication(config.userName(), config.password())
-                        .withPlainText(batch.stream()
+                        .withPlainText(collect.stream()
                                 .flatMap(m -> m.match(
                                         gauge -> writeGauge(gauge.getId(), gauge.value()),
                                         counter -> writeCounter(counter.getId(), counter.count()),
@@ -127,7 +142,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                         .compressWhen(config::compressed)
                         .send()
                         .onSuccess(response -> {
-                            logger.debug("successfully sent {} metrics to InfluxDB.", batch.size());
+                            logger.debug("successfully sent {} metrics to InfluxDB.", collect.size());
                             databaseExists = true;
                         })
                         .onError(response -> logger.error("failed to send metrics to influx: {}", response.body()));

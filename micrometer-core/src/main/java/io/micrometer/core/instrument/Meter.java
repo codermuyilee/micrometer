@@ -180,6 +180,7 @@ public interface Meter {
         private final String name;
         private final Tags tags;
         private final Type type;
+        private int expiryTime = 0;
 
         @Nullable
         private final Meter.Id syntheticAssociation;
@@ -347,6 +348,19 @@ public interface Meter {
                     ", tags=" + tags +
                     '}';
         }
+
+        public void increaseExpiryTime() {
+            expiryTime++;
+        }
+
+        public void resetExpiryTime() {
+            expiryTime = 0;
+        }
+
+        public int getExpiryTime() {
+            return expiryTime;
+        }
+
 
         @Override
         public boolean equals(@Nullable Object o) {

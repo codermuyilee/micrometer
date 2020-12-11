@@ -3,6 +3,9 @@ plugins {
 }
 
 dependencies {
+
+    version("1.6.0-intl-SNAPSHOT")
+
     // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
     api 'org.hdrhistogram:HdrHistogram'
     implementation('org.latencyutils:LatencyUtils') {
@@ -17,7 +20,7 @@ dependencies {
     optionalApi 'com.github.ben-manes.caffeine:caffeine'
     optionalApi 'net.sf.ehcache:ehcache'
     optionalApi 'javax.cache:cache-api'
-    optionalApi 'com.hazelcast:hazelcast'
+    optionalApi 'com.hazelcast:hazelcast:4.1'
     optionalApi 'org.hibernate:hibernate-entitymanager'
 
     // server runtime monitoring
@@ -47,7 +50,7 @@ dependencies {
 
     optionalApi 'org.mongodb:mongo-java-driver'
 
-    optionalApi 'org.jooq:jooq'
+    optionalApi 'org.jooq:jooq:3.13.6'
 
     optionalApi 'org.apache.kafka:kafka-clients'
     optionalApi 'org.apache.kafka:kafka-streams'
@@ -96,4 +99,35 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:kafka'
+}
+
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+//            artifact(sourcesJar) {
+//                classifier = 'sources'Validated
+//            }
+            pom.withXml {
+                asNode().dependencies.dependency.each {
+                    dep ->
+                        if (dep.version.text() == "unspecified") {
+                            dep.getAt('groupId').get(0).setValue(project.group)
+                            dep.getAt('version').get(0).setValue(project.version)
+                        }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url 'http://jfrog.cloud.qiyi.domain/libs-snapshot'
+            credentials{
+                username 'iqiyi-maven-intl'
+                password 't2YkqFz1Gdmx'
+            }
+        }
+    }
 }
