@@ -1,3 +1,7 @@
+apply plugin: 'maven-publish'
+apply plugin: 'java-library'
+apply plugin: "com.jfrog.artifactory"
+
 dependencies {
     api project(':micrometer-core')
 
@@ -5,37 +9,34 @@ dependencies {
 
     testImplementation project(':micrometer-test')
 
-    group("com.iqiyi.intl")
     version("1.5.1.2")
+
+    group("com.iqiyi.intl")
+
 }
 
 
 publishing {
     publications {
         mavenJava(MavenPublication) {
+            groupId = 'com.iqiyi.intl'
+            artifactId ='micrometer-registry-influx'
+            version =  '1.5.1.2'
             from components.java
-//            artifact(sourcesJar) {
-//                classifier = 'sources'Validated
-//            }
-            pom.withXml {
-                asNode().dependencies.dependency.each {
-                    dep ->
-                        if (dep.version.text() == "unspecified") {
-                            dep.getAt('groupId').get(0).setValue(project.group)
-                            dep.getAt('version').get(0).setValue(project.version)
-                        }
-                }
-            }
         }
     }
 
+
+
     repositories {
         maven {
-            url 'http://jfrog.cloud.qiyi.domain/libs-snapshot'
+            url 'http://jfrog.cloud.qiyi.domain/iqiyi-maven-release'
             credentials{
                 username 'iqiyi-maven-intl'
                 password 't2YkqFz1Gdmx'
             }
+
         }
+
     }
 }
