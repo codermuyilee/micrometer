@@ -673,10 +673,10 @@ public abstract class MeterRegistry {
 
     public void calculateExpiryTime() {
         meterMap.forEach((id, value) -> {
-            value.measure().forEach(a -> {
+            value.measure().iterator().forEachRemaining(a -> {
                 if (!(a.getValue() > 0)) {
                     id.increaseExpiryTime();
-                } else {
+                } else if (a.getValue() > 0 && id.getExpiryTime() > 0) {
                     id.resetExpiryTime();
                 }
             });

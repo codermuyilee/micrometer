@@ -20,10 +20,16 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.ToDoubleFunction;
@@ -38,6 +44,8 @@ import java.util.function.ToLongFunction;
  * @author Johnny Lim
  */
 public class CompositeMeterRegistry extends MeterRegistry {
+    private final static InternalLogger logger = InternalLoggerFactory.getInstance(CompositeMeterRegistry.class);
+
     private final AtomicBoolean registriesLock = new AtomicBoolean(false);
     private final Set<MeterRegistry> registries = Collections.newSetFromMap(new IdentityHashMap<>());
     private final Set<MeterRegistry> unmodifiableRegistries = Collections.unmodifiableSet(registries);
@@ -47,9 +55,12 @@ public class CompositeMeterRegistry extends MeterRegistry {
 
     private final AtomicBoolean parentLock = new AtomicBoolean(false);
     private volatile Set<CompositeMeterRegistry> parents = Collections.newSetFromMap(new IdentityHashMap<>());
+    @Nullable
+    private ScheduledExecutorService scheduledExecutorService;
 
     public CompositeMeterRegistry() {
         this(Clock.SYSTEM);
+        start();
     }
 
     public CompositeMeterRegistry(Clock clock) {
@@ -72,6 +83,40 @@ public class CompositeMeterRegistry extends MeterRegistry {
                 });
 
         registries.forEach(this::add);
+    }
+
+
+    @Deprecated
+    public final void start() {
+        start(Executors.defaultThreadFactory());
+    }
+
+    public void start(ThreadFactory threadFactory) {
+        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
+        scheduledExecutorService.scheduleAtFixedRate(this::expireSafely, 10, 300, TimeUnit.SECONDS);
+    }
+
+    private void expireSafely() {
+        try {
+            calculateExpiryTime();
+            expire();
+        } catch (Throwable e) {
+            logger.warn("Unexpected exception thrown while expiring metrics for " + this.getClass().getSimpleName(), e);
+        }
+    }
+
+
+    public void expire() {
+        Map<Meter.Id, Meter> meterMap = getMeterMap();
+        meterMap.forEach((id, value) -> {
+                    if (id.getExpiryTime() >= 3 && (!value.measure().iterator().hasNext() ||value.measure().iterator().next().getValue()<=0)) {
+                        logger.info("remove " + id.toString());
+                        remove(id);
+                    }
+                }
+
+        );
+
     }
 
     @Override

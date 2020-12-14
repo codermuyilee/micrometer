@@ -5,8 +5,8 @@ dependencies {
 
     testImplementation project(':micrometer-test')
 
-    version("1.6.0-intl-SNAPSHOT")
-
+    group("com.iqiyi.intl")
+    version("1.5.1.2")
 }
 
 

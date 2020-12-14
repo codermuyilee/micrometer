@@ -23,13 +23,11 @@ import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.util.internal.logging.InternalLogger;
 import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public abstract class PushMeterRegistry extends MeterRegistry {
     private final static InternalLogger logger = InternalLoggerFactory.getInstance(PushMeterRegistry.class);
@@ -54,8 +52,8 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     private void publishSafely() {
         try {
             publish();
-            calculateExpiryTime();
-            expire();
+           // calculateExpiryTime();
+           // expire();
         } catch (Throwable e) {
             logger.warn("Unexpected exception thrown while publishing metrics for " + this.getClass().getSimpleName(), e);
         }
@@ -81,17 +79,18 @@ public abstract class PushMeterRegistry extends MeterRegistry {
                     .toMillis(), config.step().toMillis(), TimeUnit.MILLISECONDS);
         }
     }
-
-    public void expire() {
-        Map<Meter.Id, Meter> meterMap = getMeterMap();
-        List<Meter.Id> list = meterMap.keySet().stream().filter(a ->
-                config.expiryInterval() <= a.getExpiryTime()
-        ).collect(Collectors.toList());
-
-        for (Meter.Id id : list) {
-            remove(id);
-        }
-    }
+//
+//    public void expire() {
+//        Map<Meter.Id, Meter> meterMap = getMeterMap();
+//        meterMap.keySet().stream().forEach(a -> {
+//                    if (a.getExpiryTime() >= config.expiryInterval()) {
+//                        remove(a);
+//                    }
+//                }
+//
+//        );
+//
+//    }
 
     public void stop() {
         if (scheduledExecutorService != null) {

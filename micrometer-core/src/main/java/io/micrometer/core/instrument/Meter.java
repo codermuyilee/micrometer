@@ -181,7 +181,17 @@ public interface Meter {
         private final Tags tags;
         private final Type type;
         private int expiryTime = 0;
+        public void increaseExpiryTime() {
+            expiryTime++;
+        }
 
+        public void resetExpiryTime() {
+            expiryTime = 0;
+        }
+
+        public int getExpiryTime() {
+            return expiryTime;
+        }
         @Nullable
         private final Meter.Id syntheticAssociation;
 
@@ -349,17 +359,6 @@ public interface Meter {
                     '}';
         }
 
-        public void increaseExpiryTime() {
-            expiryTime++;
-        }
-
-        public void resetExpiryTime() {
-            expiryTime = 0;
-        }
-
-        public int getExpiryTime() {
-            return expiryTime;
-        }
 
 
         @Override

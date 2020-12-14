@@ -3,8 +3,8 @@ plugins {
 }
 
 dependencies {
-
-    version("1.6.0-intl-SNAPSHOT")
+    group("com.iqiyi.intl")
+    version("1.5.1.2")
 
     // TODO(anuraaga): HdrHistogram is exposed in the micrometer API but probably shouldn't be
     api 'org.hdrhistogram:HdrHistogram'
